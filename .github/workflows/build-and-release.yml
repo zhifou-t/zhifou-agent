@@ -1,0 +1,70 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.19'
+
+      - name: Build for Linux amd64
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o zhifou-agent-linux-amd64 .
+
+      - name: Build for Linux arm64
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o zhifou-agent-linux-arm64 .
+
+      - name: Build for Windows amd64
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o zhifou-agent-windows-amd64.exe .
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset for Linux amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./zhifou-agent-linux-amd64
+          asset_name: zhifou-agent-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset for Linux arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./zhifou-agent-linux-arm64
+          asset_name: zhifou-agent-linux-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset for Windows amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./zhifou-agent-windows-amd64.exe
+          asset_name: zhifou-agent-windows-amd64.exe
+          asset_content_type: application/octet-stream
