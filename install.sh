@@ -21,6 +21,14 @@ if [[ ! -d /etc/systemd/system/ ]]; then
 fi
 echo -e "${GREEN}System supports systemd.${NC}"
 
+# Check if the machine supports IPv4
+if ip -4 route list default >/dev/null 2>&1; then
+    echo "IPv4 is supported."
+else
+    echo "IPv4 is not supported. Exiting..."
+    exit 1
+fi
+
 # Parse command-line options
 while getopts ":s:i:c:" opt; do
   case $opt in
